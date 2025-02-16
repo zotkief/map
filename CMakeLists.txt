@@ -28,3 +28,6 @@ find_package(OpenCV REQUIRED)
 # Podłącz OpenCV (poprawienie składni, użycie jednej wersji)
 include_directories(${OpenCV_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenCV_LIBS})
+
+file(GLOB SQLITE_SOURCES lib/sqlite/*.c)
+add_library(sqlite STATIC ${SQLITE_SOURCES})

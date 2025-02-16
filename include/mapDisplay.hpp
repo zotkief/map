@@ -1,6 +1,9 @@
 #ifndef MAPSISPLAYHPP
 #define MAPSISPLAYHPP
 
+#include <gdal/gdal_priv.h>
+#include <opencv4/opencv2/opencv.hpp>
+
 #include "map.hpp"
 #include "geography.hpp"
 
