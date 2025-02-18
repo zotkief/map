@@ -13,7 +13,7 @@ int main() {
     GDALAllRegister();
 
     std::string command;
-    DatabaseConnector data();
+    DatabaseConnector data;
     std::string message="enter help to see manual";
 
     while(1){

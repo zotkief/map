@@ -31,3 +31,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenCV_LIBS})
 
 file(GLOB SQLITE_SOURCES lib/sqlite/*.c)
 add_library(sqlite STATIC ${SQLITE_SOURCES})
+
+target_link_libraries(${PROJECT_NAME} PRIVATE sqlite)
