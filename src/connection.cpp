@@ -38,3 +38,15 @@ int DatabaseConnector::callback(void* buffer, int argc, char** argv, char** azCo
     (*resultBuffer)+="\n";
     return 0;
 }
+std::string DatabaseConnector::getData(std::string presetName)
+{
+    std::string query="SELECT * FROM presets WHERE presetName='";
+    query+=presetName+"';";
+
+
+    char* message;
+    queryResult="";
+    sqlite3_exec(db,query.c_str(),callback,&queryResult,&message);
+    std::string s=queryResult;
+    return s;
+}

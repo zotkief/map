@@ -14,6 +14,7 @@ public:
     GeoPoint getEdge(){return *edgeCorner;}
     std::string getFile(){return fileName;}
     std::string getTag(){return tagName;}
+    std::string getBounds();
 };
 
 #endif

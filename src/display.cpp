@@ -1,5 +1,7 @@
 #include <gdal/gdal_priv.h>
-#include <opencv4/opencv2/opencv.hpp>   
+#include <opencv4/opencv2/opencv.hpp>  
+#include <curl/curl.h>
+#include <nlohmann/json.hpp> 
 
 #include "map.hpp"
 #include "geography.hpp"
@@ -64,4 +66,53 @@ MapDisplay::MapDisplay(Map map)
     cv::imshow("Test Map", mapDisplay);
     cv::waitKey(0);
 
+}
+size_t writeCallback(void* contents, size_t size, size_t nmemb, std::string* out) {
+    size_t totalSize = size * nmemb;
+    out->append((char*)contents, totalSize);
+    return totalSize;
+}
+void addColor(Map map)
+{
+    std::string tag=map.getTag();
+    //std::string bounds=
+
+
+    CURL* curl;
+    CURLcode resultCode;
+    std::string readBuffer;
+
+    curl=curl_easy_init();
+    if(curl==NULL)
+    {
+        std::cerr<<"libcurl error"<<std::endl;
+        return;
+    }
+
+    std::string query = "[out:json];node[\"amenity\"=\"";
+    query+=tag;
+    query+="\"](";
+    query+=map.getBounds();
+    query+=");out skel;";
+   
+
+    std::string url = "http://overpass-api.de/api/interpreter?data=";
+    url+= curl_easy_escape(curl, query.c_str(), query.length());
+
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+    std::cout<<"jestem"<<std::endl;
+    resultCode=curl_easy_perform(curl);
+
+    if(resultCode!=CURLE_OK)
+    {
+        std::cerr<<"libcurl action error"<<std::endl;
+        return;
+    }
+
+    curl_easy_cleanup(curl);
+
+    //readBuffer - json response
 }

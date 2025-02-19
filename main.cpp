@@ -15,10 +15,11 @@ int main() {
     std::string command;
     DatabaseConnector data;
     std::string message="enter help to see manual";
+    std::cout<<message<<std::endl;
 
     while(1){
-        std::cout<<message<<std::endl;
-        std::cin>>command;
+        std::cout<<">";
+        std::getline(std::cin,command);
         std::istringstream stream(command);
 
         std::string word;
@@ -32,6 +33,7 @@ int main() {
             std::cout<<processManual()<<std::endl;
         } 
         else if (word == "gen") {
+            std::cout<<command<<std::endl;
             processGen(command);
         } 
         else if (word == "showPresets") {

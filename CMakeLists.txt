@@ -1,35 +1,46 @@
 cmake_minimum_required(VERSION 3.10)
 
-# Nazwa projektu
+#project name
 project(map)
 
-# Ustaw standard C++
+#c++ standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Dodaj wszystkie pliki .cpp z katalogu src
+#linking src files
 file(GLOB SRC_FILES src/*.cpp)
 
-# Utwórz plik wykonywalny
 add_executable(${PROJECT_NAME} main.cpp ${SRC_FILES})
 
-# Dodaj katalog z nagłówkami (include)
+#linking include folder
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
-# Znajdź bibliotekę GDAL
 find_package(GDAL REQUIRED)
 
-# Podłącz GDAL
+#linking GDAL
 target_link_libraries(${PROJECT_NAME} PRIVATE ${GDAL_LIBRARIES})
 
-# Znajdź bibliotekę OpenCV
 find_package(OpenCV REQUIRED)
 
-# Podłącz OpenCV (poprawienie składni, użycie jednej wersji)
+#linking OpenCV
 include_directories(${OpenCV_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenCV_LIBS})
 
-file(GLOB SQLITE_SOURCES lib/sqlite/*.c)
-add_library(sqlite STATIC ${SQLITE_SOURCES})
+#setting lib directories
+set(SQLITE3_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/lib/sqlite3/include")
+set(SQLITE3_LIB_DIR "${CMAKE_SOURCE_DIR}/lib/sqlite3/src")
 
-target_link_libraries(${PROJECT_NAME} PRIVATE sqlite)
+include_directories(${SQLITE3_INCLUDE_DIR})
+
+link_directories(${SQLITE3_LIB_DIR})
+
+find_package(CURL REQUIRED)
+
+target_link_libraries(map PRIVATE CURL::libcurl)
+
+
+#selectig binary
+set(SQLITE3_LIB "sqlite3")
+
+# Dodaj SQLite3 do Twojego projektu
+target_link_libraries(${PROJECT_NAME} PRIVATE ${SQLITE3_LIB})
