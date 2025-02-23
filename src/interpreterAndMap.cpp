@@ -5,6 +5,7 @@
 #include "interpreter.hpp"
 #include "map.hpp"
 #include "databaseConnector.hpp"
+#include "mapDisplay.hpp"
 
 
 std::string processManual()
@@ -23,9 +24,36 @@ void processGen(std::string command)
     DatabaseConnector db;
 
     std::string result=db.getData(preset);
-    std:istringstream sstream(result);
+    std::istringstream dataStream(result);
 
-    
+    std::cout<<result<<std::endl;
+
+    std::string tempValue;
+    double x,y;
+
+    dataStream>>tempValue;
+    x=stod(tempValue);
+    dataStream>>tempValue;
+    y=stod(tempValue);
+
+
+    GeoPoint root(x,y);
+
+    dataStream>>tempValue;
+    x=stod(tempValue);
+    dataStream>>tempValue;
+    y=stod(tempValue);
+
+    GeoPoint edge(x,y);
+
+    std::string fileName;
+
+    dataStream>>fileName;
+
+    Map map(root,edge,fileName,tag);
+    std::cout<<map.getBounds()<<std::endl;
+
+    MapDisplay mapDisplay(map);
 }
 std::string processShow()
 {
@@ -44,19 +72,19 @@ Map::Map(GeoPoint beg,GeoPoint end,std::string fl,std::string tg)
     else
     {
         rootCorner=new GeoPoint(beg.getX(),beg.getY());
-        edgeCorner=new GeoPoint(end.getX(),beg.getY());
+        edgeCorner=new GeoPoint(end.getX(),end.getY());
     }
 }
 std::string Map::getBounds()
 {
     std::string s="";
-    s+=rootCorner->getY();
+    s+=std::to_string(rootCorner->getY());
     s+=+",";
-    s+=rootCorner->getX();
+    s+=std::to_string(rootCorner->getX());
     s+=+",";
-    s+=edgeCorner->getY();
+    s+=std::to_string(edgeCorner->getY());
     s+=+",";
-    s+=edgeCorner->getX();
+    s+=std::to_string(edgeCorner->getX());
 
     return s;
 }

@@ -2,6 +2,8 @@
 #include <opencv4/opencv2/opencv.hpp>  
 #include <curl/curl.h>
 #include <nlohmann/json.hpp> 
+#include <cmath>
+#include <math.h>
 
 #include "map.hpp"
 #include "geography.hpp"
@@ -56,6 +58,8 @@ MapDisplay::MapDisplay(Map map)
         }
     }
 
+    addColor(map,width,height);
+
     //cv::Mat resized_image;
     //cv::resize(mapDisplay, resized_image, cv::Size(800, 600));
 
@@ -72,10 +76,17 @@ size_t writeCallback(void* contents, size_t size, size_t nmemb, std::string* out
     out->append((char*)contents, totalSize);
     return totalSize;
 }
-void addColor(Map map)
+double** MapDisplay::addColor(Map map,int width,int height)
 {
     std::string tag=map.getTag();
-    //std::string bounds=
+
+    double** density=new double*[width];
+    for(int i=0;i<width;i++)
+    {
+        density[i]=new double[height];
+        for(int j=0;j<height;j++)
+            density[i][j]=0;
+    }
 
 
     CURL* curl;
@@ -86,7 +97,7 @@ void addColor(Map map)
     if(curl==NULL)
     {
         std::cerr<<"libcurl error"<<std::endl;
-        return;
+        return nullptr;
     }
 
     std::string query = "[out:json];node[\"amenity\"=\"";
@@ -97,6 +108,7 @@ void addColor(Map map)
    
 
     std::string url = "http://overpass-api.de/api/interpreter?data=";
+    std::cout<<query<<std::endl;
     url+= curl_easy_escape(curl, query.c_str(), query.length());
 
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
@@ -109,10 +121,61 @@ void addColor(Map map)
     if(resultCode!=CURLE_OK)
     {
         std::cerr<<"libcurl action error"<<std::endl;
-        return;
+        return nullptr;
     }
 
     curl_easy_cleanup(curl);
 
     //readBuffer - json response
+    //std::cout<<readBuffer<<std::endl;
+
+    //data extraction
+    std::istringstream dataStream(readBuffer);
+    std::string part;
+
+    double x,y;
+    while(dataStream>>part)
+    {
+        if(part=="\"lat\":")
+        {
+            dataStream>>part;
+            part.erase(part.size()-1,1);
+            y=std::stod(part);
+        }
+        else if(part=="\"lon\":")
+        {
+            dataStream>>part;
+            x=std::stod(part);
+            
+            processPoint(density,map,x,y,width,height);
+        }
+    }
+
+    //test
+    for(int i=0;i<width;i++)
+    {
+        for(int j=0;j<height;j++)
+            std::cout<<density[i][j]<<" ";
+        std::cout<<std::endl;
+    }
+
+    return density;
+}
+void MapDisplay::processPoint(double** density,Map map,double x,double y,int width,int height)
+{
+    int pixelX=std::round((x-map.getRoot().getX())/(map.getEdge().getX()-map.getRoot().getX())*((double)width));
+    int pixelY=std::round((y-map.getRoot().getY())/(map.getEdge().getY()-map.getRoot().getY())*((double)height));
+
+    int r=std::sqrt(-ALPHA*log(EPSILON));
+
+    for(int i=pixelX-r;i<=pixelX+r;i++)
+    {
+        for(int j=pixelY-r;j<=pixelY+r;j++)
+        {  
+            double R=sqrt(pow(j-pixelY,2)+pow(i-pixelX,2));
+            double value=std::pow(M_E,-ALPHA*R*R);
+            if(value>EPSILON && i>0 && i<width && j>0 && j<height)
+                density[i][j]+=value;
+        }   
+    }
 }
