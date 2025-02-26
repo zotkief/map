@@ -1,7 +1,7 @@
 #ifndef MAPSISPLAYHPP
 #define MAPSISPLAYHPP
 
-#define EPSILON 0.00001
+#define EPSILON 0.1
 #define ALPHA 8.0
 
 #include <gdal/gdal_priv.h>
@@ -13,12 +13,12 @@
 class MapDisplay
 {
 private:
-    cv::Mat mapDisplay;
+    cv::Mat display;
     std::string filename;
     GDALDataset *dataset;
 
     double** addColor(Map map,int width,int height);
-    void processPoint(double** density,Map map,double x,double y,int width,int height);
+    void processPoint(double** density,Map map,double x,double y,int width,int height,double DPP);
 
 public:
     ~MapDisplay();

@@ -2,8 +2,10 @@
 #include <opencv4/opencv2/opencv.hpp>  
 #include <curl/curl.h>
 #include <nlohmann/json.hpp> 
+#include <iostream>
 #include <cmath>
 #include <math.h>
+#include <algorithm>
 
 #include "map.hpp"
 #include "geography.hpp"
@@ -46,28 +48,39 @@ MapDisplay::MapDisplay(Map map)
     green_band->RasterIO(GF_Read, 0, 0, width, height, green_data.data(), width, height, GDT_Byte, 0, 0);
     blue_band->RasterIO(GF_Read, 0, 0, width, height, blue_data.data(), width, height, GDT_Byte, 0, 0);
 
-    mapDisplay.create(height, width, CV_8UC3);
+    display.create(height, width, CV_8UC3);
+
+
+    double** density=addColor(map,width,height);
+
 
     cv::Vec3b* pixel_ptr;
     for (int i = 0; i < height; i++) {
-        pixel_ptr = mapDisplay.ptr<cv::Vec3b>(i);
+        pixel_ptr = display.ptr<cv::Vec3b>(i);
         for (int j = 0; j < width; j++) {
-            pixel_ptr[j][0] = blue_data[i * width + j];
             pixel_ptr[j][1] = green_data[i * width + j];
-            pixel_ptr[j][2] = red_data[i * width + j];
+            if(blue_data[i * width + j]>200&&green_data[i * width + j]>200)
+            {
+                pixel_ptr[j][0] = 255-std::min((int)density[j][i],255);//blue_data[i * width + j];
+                pixel_ptr[j][2] = 255-std::min((int)density[j][i],255);//red_data[i * width + j];
+            }
+            else
+            {
+                pixel_ptr[j][0] = blue_data[i * width + j];
+                pixel_ptr[j][2] = red_data[i * width + j];
+            }
         }
     }
 
-    addColor(map,width,height);
 
     //cv::Mat resized_image;
-    //cv::resize(mapDisplay, resized_image, cv::Size(800, 600));
+    //cv::resize(display, resized_image, cv::Size(800, 600));
 
     cv::namedWindow("Test Map", cv::WINDOW_NORMAL);
     cv::resizeWindow("Test Map", 800, 600);
 
     // Wyświetlanie obrazu
-    cv::imshow("Test Map", mapDisplay);
+    cv::imshow("Test Map", display);
     cv::waitKey(0);
 
 }
@@ -133,6 +146,8 @@ double** MapDisplay::addColor(Map map,int width,int height)
     std::istringstream dataStream(readBuffer);
     std::string part;
 
+    double degreesPerPixel=(map.getEdge().getX()-map.getRoot().getX())/width;
+
     double x,y;
     while(dataStream>>part)
     {
@@ -147,33 +162,41 @@ double** MapDisplay::addColor(Map map,int width,int height)
             dataStream>>part;
             x=std::stod(part);
             
-            processPoint(density,map,x,y,width,height);
+            processPoint(density,map,x,y,width,height,degreesPerPixel);
         }
     }
 
-    //test
+    double maxDensity=0;
     for(int i=0;i<width;i++)
     {
         for(int j=0;j<height;j++)
-            std::cout<<density[i][j]<<" ";
-        std::cout<<std::endl;
+            if(maxDensity<density[i][j])
+                maxDensity=density[i][j];
+    }
+    double aplifier=255.0/maxDensity;
+
+    for(int i=0;i<width;i++)
+    {
+        for(int j=0;j<height;j++)
+            density[i][j]*=aplifier;
     }
 
     return density;
 }
-void MapDisplay::processPoint(double** density,Map map,double x,double y,int width,int height)
+void MapDisplay::processPoint(double** density,Map map,double x,double y,int width,int height,double DPP)
 {
     int pixelX=std::round((x-map.getRoot().getX())/(map.getEdge().getX()-map.getRoot().getX())*((double)width));
     int pixelY=std::round((y-map.getRoot().getY())/(map.getEdge().getY()-map.getRoot().getY())*((double)height));
 
-    int r=std::sqrt(-ALPHA*log(EPSILON));
+
+    int r=pow(log(EPSILON)/(-ALPHA)/pow(DPP,2.0),0.333);
 
     for(int i=pixelX-r;i<=pixelX+r;i++)
     {
         for(int j=pixelY-r;j<=pixelY+r;j++)
         {  
-            double R=sqrt(pow(j-pixelY,2)+pow(i-pixelX,2));
-            double value=std::pow(M_E,-ALPHA*R*R);
+            double R=pow(pow(j-pixelY,2)+pow(i-pixelX,2),0.333)*DPP;
+            double value=std::pow(M_E,-ALPHA*R*R*R);
             if(value>EPSILON && i>0 && i<width && j>0 && j<height)
                 density[i][j]+=value;
         }   
