@@ -138,10 +138,6 @@ double** MapDisplay::addColor(Map map,int width,int height)
     }
 
     curl_easy_cleanup(curl);
-
-    //readBuffer - json response
-    //std::cout<<readBuffer<<std::endl;
-
     //data extraction
     std::istringstream dataStream(readBuffer);
     std::string part;
@@ -188,15 +184,18 @@ void MapDisplay::processPoint(double** density,Map map,double x,double y,int wid
     int pixelX=std::round((x-map.getRoot().getX())/(map.getEdge().getX()-map.getRoot().getX())*((double)width));
     int pixelY=std::round((y-map.getRoot().getY())/(map.getEdge().getY()-map.getRoot().getY())*((double)height));
 
+    //std::cout<<x<<" "<<y<<" "<<pixelX<<" "<<pixelY<<std::endl;
 
-    int r=pow(log(EPSILON)/(-ALPHA)/pow(DPP,2.0),0.333);
+    int r=pow(log(EPSILON)/(-ALPHA),1);
+    //std::cout<<x<<" "<<map.getEdge().getX()<<" "<<map.getRoot().getX()<<" "<<r<<std::endl;
+    //std::cout<<r<<std::endl;
 
     for(int i=pixelX-r;i<=pixelX+r;i++)
     {
         for(int j=pixelY-r;j<=pixelY+r;j++)
         {  
-            double R=pow(pow(j-pixelY,2)+pow(i-pixelX,2),0.333)*DPP;
-            double value=std::pow(M_E,-ALPHA*R*R*R);
+            double R=pow(pow(j-pixelY,2)+pow(i-pixelX,2),0.5);
+            double value=std::pow(M_E,-ALPHA*R);
             if(value>EPSILON && i>0 && i<width && j>0 && j<height)
                 density[i][j]+=value;
         }   

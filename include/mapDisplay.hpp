@@ -2,7 +2,7 @@
 #define MAPSISPLAYHPP
 
 #define EPSILON 0.1
-#define ALPHA 8.0
+#define ALPHA 0.1
 
 #include <gdal/gdal_priv.h>
 #include <opencv4/opencv2/opencv.hpp>   
